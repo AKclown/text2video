@@ -127,7 +127,7 @@ def requestImage(model, prompt):
                         data=json.dumps(body), headers=headers)
             return r
     except:
-        print("错误错误错误错误错误")
+        print("requestImage：远程主机强迫关闭一个现有链接,正在重试")
         return  requestImage(model, prompt)
     
     
@@ -168,8 +168,7 @@ def convert_text_to_speech(text, output_file):
     # 执行命令，并将工作目录设置为输出目录
     try:
         command = ['edge-tts', '--voice', 'zh-CN-XiaoyiNeural', '--text', text, '--write-media', output_file, '--write-subtitles', f'{output_file}.vtt']
-        result = subprocess.run(command, cwd=current_directory, timeout=20)
-        print("执行开始 ==============",result)
+        result = subprocess.run(command, cwd=current_directory, timeout=50)
         # duration = get_duration_from_vtt(output_file + ".vtt")
         # 删除 无效音频 or 重新生成？
         # if duration == 0.1:

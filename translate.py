@@ -20,6 +20,7 @@ def translate_to_english(text):
         else:
             return text
     except:
+       print("translate_to_english：远程主机强迫关闭一个现有链接,正在重试")
        return  translate_to_english(text)
 
 
