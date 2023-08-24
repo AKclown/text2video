@@ -9,6 +9,8 @@ import numpy as np
 import subprocess
 import re
 import random
+import datetime
+import math
 
 from add_text_to_image import add_text_to_image
 from translate import translate_to_english
@@ -113,6 +115,7 @@ api_token = os.getenv('API_TOKEN')
 #     "Content-Type": "application/json"
 # }
 
+# !!! 模型依赖生成图片
 # def requestImage(model, prompt):
 #     r = any
 #     try:
@@ -162,8 +165,8 @@ def convert_text_to_speech(text, output_file):
     os.makedirs(output_directory, exist_ok=True)
     # 执行命令，并将工作目录设置为输出目录
     try:
-        command = ['edge-tts', '--voice', 'zh-CN-XiaoyiNeural', '--text', text, '--write-subtitles', f'{output_file}.vtt',
-                   '--write-media', output_file]
+        command = ['edge-tts', '--voice', 'zh-CN-XiaoyiNeural', '--text', text,
+                   '--write-media', output_file, '--write-subtitles', f'{output_file}.vtt']
         result = subprocess.run(command, cwd=current_directory, timeout=100)
         # duration = get_duration_from_vtt(output_file + ".vtt")
         # 删除 无效音频 or 重新生成？
@@ -209,7 +212,7 @@ def convertTextToVideo(model, text):
     # 清空 videos 文件夹
     clear_folder("videos")
 
-    # 为每个句子生成图片
+    # 为每个句子生成语音
     for i in range(sentences.index(sentences[-1])+1):
         if sentences[i].strip() != "":
             voicePath = "voices/" + str(i) + ".mp3"
@@ -220,9 +223,15 @@ def convertTextToVideo(model, text):
     # 合成视频
     frame_width = 640
     frame_height = 480
-    timeStamp = str(int(time.time()))
-    output_video_path = "videos/" + timeStamp + \
-        "-" + model.split("/")[-1] + ".mp4"
+    now = datetime.datetime.now()
+    year = now.year
+    month = now.month
+    day = now.day
+    video_name = f"【每日新闻热点】{year}年{month}月{day}日"
+    output_video_path = "videos/" + video_name + ".origin.mp4"
+    # https://docs.opencv.org/4.x/dd/d43/tutorial_py_video_display.html
+    # cv2.VideoWriter初始化视频write构造器
+    # cv2.VideoWriter_fourcc指定解码器
     output_video = cv2.VideoWriter(output_video_path, cv2.VideoWriter_fourcc(
         *'mp4v'), 30, (frame_width, frame_height))
 
@@ -238,24 +247,26 @@ def convertTextToVideo(model, text):
             draw_text = sentences[image_files.index(image_file)]
             add_text_to_image(draw_text, image_path,
                               text_color, background, padding=10)
+            # 从文件中加载图片
             image = cv2.imread(image_path)
+            # 缩放图片
             resized_image = cv2.resize(image, (frame_width, frame_height))
+            # 写入视频的下一帧
             output_video.write(resized_image)
             # 添加停顿帧
             duration = get_duration_from_vtt(
                 f"voices/{find_file_name_without_extension(image_file)}.mp3.vtt")
             print(duration)
-            for _ in range(int(duration * 30)):
+            for _ in range(int(math.ceil(duration) * 31)):
                 output_video.write(resized_image)
-
+    # 关闭video write
     output_video.release()
-    middle_output_video_path = "videos/" + timeStamp + \
-        "-" + model.split("/")[-1] + ".withAudio.mp4"
+    
+    middle_output_video_path = "videos/" + video_name + ".withAudio.mp4"
 
     merge_audio_to_video("voices", output_video_path,
                          middle_output_video_path)
-    desc_output_video_path = "videos/"+find_file_name_without_extension(
-        middle_output_video_path)+"transformH264.mp4"
+    desc_output_video_path = "videos/"+ video_name +".mp4"
     convert_to_h264(middle_output_video_path, desc_output_video_path)
     return desc_output_video_path
 
