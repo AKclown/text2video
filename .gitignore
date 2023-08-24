@@ -1,1 +1,4 @@
 .local.env
+/voices/**
+/videos/**
+/images/**
