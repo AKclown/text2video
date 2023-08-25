@@ -165,7 +165,7 @@ def convert_text_to_speech(text, output_file):
     os.makedirs(output_directory, exist_ok=True)
     # 执行命令，并将工作目录设置为输出目录
     try:
-        command = ['edge-tts', '--voice', 'zh-CN-XiaoyiNeural', '--text', text,
+        command = ['edge-tts', '--voice', 'zh-CN-YunjianNeural', '--text', text,
                    '--write-media', output_file, '--write-subtitles', f'{output_file}.vtt']
         result = subprocess.run(command, cwd=current_directory, timeout=100)
         # duration = get_duration_from_vtt(output_file + ".vtt")
